@@ -1,0 +1,47 @@
+import { TrustedVoiceProfile } from '../types';
+
+export const INITIAL_TRUSTED_PROFILES: TrustedVoiceProfile[] = [
+  {
+    id: 'prof_1',
+    name: 'Rahul Sharma',
+    relationship: 'Brother',
+    phoneNumber: '+91 98765 43242',
+    status: 'REGISTERED',
+    registeredDate: '2026-05-12',
+    sampleCount: 4,
+    embeddingHash: 'sha256_e8f9a01b92c431',
+    lastVerifiedAt: '2026-09-01 14:30',
+  },
+  {
+    id: 'prof_2',
+    name: 'Anita Sharma',
+    relationship: 'Mother',
+    phoneNumber: '+91 98123 45678',
+    status: 'REGISTERED',
+    registeredDate: '2026-06-20',
+    sampleCount: 5,
+    embeddingHash: 'sha256_b3c4d5e6f7a890',
+    lastVerifiedAt: '2026-08-28 11:15',
+  },
+  {
+    id: 'prof_3',
+    name: 'Priya Verma',
+    relationship: 'Spouse / Partner',
+    phoneNumber: '+91 99887 76655',
+    status: 'REGISTERED',
+    registeredDate: '2026-07-04',
+    sampleCount: 3,
+    embeddingHash: 'sha256_99a8b7c6d5e4f3',
+    lastVerifiedAt: '2026-09-02 09:45',
+  },
+  {
+    id: 'prof_4',
+    name: 'Vikram Patel',
+    relationship: 'Business Partner',
+    phoneNumber: '+91 97112 23344',
+    status: 'PENDING',
+    registeredDate: '2026-09-01',
+    sampleCount: 1,
+    embeddingHash: 'sha256_11223344556677',
+  },
+];
