@@ -5,8 +5,12 @@ export type LanguageCode = 'Hindi' | 'English' | 'Bengali' | 'Marathi' | 'Tamil'
 export interface LanguageSegment {
   timestamp: string;
   timeSeconds: number;
+  segmentDurationSeconds?: number;
   language: LanguageCode;
+  nativeName?: string;
   confidence: number; // 0 - 100
+  sampleSnippet?: string;
+  detectionModel?: string;
 }
 
 export interface VoiceAnalysisSignals {

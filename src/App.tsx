@@ -29,7 +29,7 @@ export function AppContent() {
   // Risk Engine Formula Weights Config
   const { weights, updateWeight, resetWeights, totalWeight } = useRiskConfig();
 
-  // Live Ticking Scenario Engine
+  // Live Ticking Scenario Engine with Automated LID Detection
   const {
     activeScenarioId,
     selectScenario,
@@ -39,7 +39,6 @@ export function AppContent() {
     updateSignals,
     updateTransaction,
     addSecurityAction,
-    manuallySwitchLanguage,
   } = useLiveCall(weights);
 
   // Call History State
@@ -74,7 +73,7 @@ export function AppContent() {
     StorageService.resetDemoData();
     setCallHistory(StorageService.getCallHistory());
     resetWeights();
-    selectScenario('VOICE_CLONE_SCAM');
+    selectScenario('MULTILINGUAL_CODE_SWITCH');
     addToast('Demo Reset', 'All LocalStorage state reset to factory defaults.', 'warning');
   };
 
@@ -113,10 +112,6 @@ export function AppContent() {
             setCallHistory(StorageService.getCallHistory());
           }}
           onAddToast={addToast}
-          onManualLanguageSwitch={(lang) => {
-            manuallySwitchLanguage(lang);
-            addToast('Code-Switch Detected', `Caller switched spoken language to ${lang}. Risk baseline preserved.`, 'info');
-          }}
         />
       )}
 

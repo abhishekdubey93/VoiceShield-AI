@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CallRecord, LanguageCode, SecurityActionRecord, TransactionDetails } from '../types';
+import { CallRecord, SecurityActionRecord, TransactionDetails } from '../types';
 import { Waveform } from '../components/common/Waveform';
 import { RiskMeter } from '../components/common/RiskMeter';
 import { LanguageTimeline } from '../components/call/LanguageTimeline';
@@ -35,7 +35,6 @@ interface LiveCallPageProps {
   onUpdateTransaction: (updates: Partial<TransactionDetails>) => void;
   onAddAction: (action: SecurityActionRecord) => void;
   onAddToast: (title: string, message: string, type?: 'info' | 'warning' | 'success' | 'danger') => void;
-  onManualLanguageSwitch?: (lang: LanguageCode) => void;
 }
 
 export const LiveCallPage: React.FC<LiveCallPageProps> = ({
@@ -46,7 +45,6 @@ export const LiveCallPage: React.FC<LiveCallPageProps> = ({
   onUpdateTransaction,
   onAddAction,
   onAddToast,
-  onManualLanguageSwitch,
 }) => {
   const { t } = useLanguage();
   // Modal states
@@ -128,11 +126,11 @@ export const LiveCallPage: React.FC<LiveCallPageProps> = ({
               {t('liveCallMonitor')}
             </h2>
             <span className="bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px] font-mono px-2 py-0.5 rounded font-bold">
-              {t('liveAnalysis')}
+              AUTOMATED AI INSPECTION
             </span>
           </div>
           <p className="text-xs text-slate-400 mt-1">
-            Real-time ticking stream inspection • Simulated 1–2s signal updates & code-switching adaptation
+            Real-time ticking stream inspection • Automated acoustic feature extraction & neural language identification (LID)
           </p>
         </div>
 
@@ -242,10 +240,7 @@ export const LiveCallPage: React.FC<LiveCallPageProps> = ({
           </div>
 
           {/* Multilingual Timeline */}
-          <LanguageTimeline
-            segments={currentCall.languagesDetected}
-            onManualLanguageSwitch={onManualLanguageSwitch}
-          />
+          <LanguageTimeline segments={currentCall.languagesDetected} />
         </div>
 
         {/* Col 3: Live Risk Meter & Protection Action Control Center */}

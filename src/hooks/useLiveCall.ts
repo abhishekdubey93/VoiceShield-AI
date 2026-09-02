@@ -1,18 +1,28 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { CallRecord, LanguageCode, RiskWeights, ScenarioId, SecurityActionRecord } from '../types';
+import { CallRecord, LanguageCode, RiskWeights, ScenarioId, SecurityActionRecord, LanguageSegment } from '../types';
 import { DEMO_SCENARIOS } from '../data/demoScenarios';
 import { RiskEngine } from '../services/riskEngine';
 import { AuditService } from '../services/auditService';
 import { StorageService } from '../services/storageService';
 import { formatDuration } from '../utils/formatters';
 
+const AUTOMATIC_LANGUAGE_SEQUENCE: { lang: LanguageCode; native: string; snippet: string }[] = [
+  { lang: 'Hindi', native: 'हिंदी', snippet: 'सुनो भैया, बहुत जरूरी काम है।' },
+  { lang: 'English', native: 'English', snippet: 'I am transferring the money to the account now.' },
+  { lang: 'Hindi', native: 'हिंदी', snippet: 'हाँ, तुरंत कन्फर्म करो।' },
+  { lang: 'Bhojpuri', native: 'भोजपुरी', snippet: 'हमरा के तनी मदद चाही रहे।' },
+  { lang: 'Marathi', native: 'मराठी', snippet: 'हो, काम लवकर पूर्ण करा.' },
+  { lang: 'Tamil', native: 'தமிழ்', snippet: 'சரி, நான் உடனே சரிபார்க்கிறேன்.' },
+];
+
 export function useLiveCall(weights: RiskWeights) {
-  const [activeScenarioId, setActiveScenarioId] = useState<ScenarioId>('VOICE_CLONE_SCAM');
+  const [activeScenarioId, setActiveScenarioId] = useState<ScenarioId>('MULTILINGUAL_CODE_SWITCH');
   const [currentCall, setCurrentCall] = useState<CallRecord>(
-    () => DEMO_SCENARIOS.VOICE_CLONE_SCAM.defaultCall
+    () => DEMO_SCENARIOS.MULTILINGUAL_CODE_SWITCH.defaultCall
   );
   const [isSimulating, setIsSimulating] = useState<boolean>(true);
   const tickCountRef = useRef(0);
+  const langIndexRef = useRef(0);
 
   // Switch Scenario
   const selectScenario = useCallback((id: ScenarioId) => {
@@ -23,6 +33,7 @@ export function useLiveCall(weights: RiskWeights) {
       callCopy.riskBreakdown = RiskEngine.calculateRisk(callCopy.signals, weights);
       setCurrentCall(callCopy);
       tickCountRef.current = 0;
+      langIndexRef.current = 0;
       AuditService.logEvent(
         `Switched demo scenario to: ${scenario.name}`,
         callCopy.riskBreakdown.finalScore,
@@ -42,55 +53,6 @@ export function useLiveCall(weights: RiskWeights) {
     });
   }, [weights]);
 
-  // Interactive Live Language Switcher
-  const manuallySwitchLanguage = useCallback((newLang: LanguageCode) => {
-    setCurrentCall((prev) => {
-      const formattedTime = formatDuration(prev.durationSeconds);
-      const prevLang = prev.languagesDetected[prev.languagesDetected.length - 1]?.language || 'Hindi';
-
-      if (prevLang === newLang) return prev;
-
-      const newSegment = {
-        timestamp: formattedTime,
-        timeSeconds: prev.durationSeconds,
-        language: newLang,
-        confidence: Math.floor(92 + Math.random() * 7),
-      };
-
-      const updatedLanguages = [...prev.languagesDetected, newSegment];
-      const updatedTimeline = [
-        ...prev.incidentTimeline,
-        {
-          timestamp: formattedTime,
-          timeSeconds: prev.durationSeconds,
-          title: `Language Switched: ${prevLang} → ${newLang}`,
-          description: `Chunk-level acoustic model adapted seamlessly. Baseline risk score unaffected.`,
-          severity: 'INFO' as const,
-        },
-      ];
-
-      // Note: Risk score is explicitly NOT penalized by language switching
-      const updatedCall: CallRecord = {
-        ...prev,
-        primaryLanguage: newLang,
-        languagesDetected: updatedLanguages,
-        incidentTimeline: updatedTimeline,
-      };
-
-      StorageService.addCallRecord(updatedCall);
-      AuditService.logEvent(
-        `Multilingual Code-Switch: ${prevLang} → ${newLang}`,
-        prev.riskBreakdown.finalScore,
-        'LANGUAGE_SWITCH',
-        'System',
-        'Completed',
-        prev.id
-      );
-
-      return updatedCall;
-    });
-  }, []);
-
   // Ticking real-time engine (every 1.5 seconds)
   useEffect(() => {
     if (!isSimulating || currentCall.status === 'COMPLETED' || currentCall.status === 'BLOCKED') {
@@ -107,25 +69,51 @@ export function useLiveCall(weights: RiskWeights) {
         let nextLanguages = [...prev.languagesDetected];
         const nextTimeline = [...prev.incidentTimeline];
 
-        // Specific live variations based on scenario
+        // Automatic Language Switch Detection every 6 ticks (~9 seconds)
+        if (tick % 6 === 0 && (activeScenarioId === 'MULTILINGUAL_CODE_SWITCH' || activeScenarioId === 'VOICE_CLONE_SCAM' || activeScenarioId === 'SAFE_FAMILY_CALL')) {
+          langIndexRef.current = (langIndexRef.current + 1) % AUTOMATIC_LANGUAGE_SEQUENCE.length;
+          const nextLangObj = AUTOMATIC_LANGUAGE_SEQUENCE[langIndexRef.current];
+
+          const currentLastLang = nextLanguages[nextLanguages.length - 1]?.language;
+
+          if (currentLastLang !== nextLangObj.lang) {
+            const formattedTime = formatDuration(nextDuration);
+            const newSeg: LanguageSegment = {
+              timestamp: formattedTime,
+              timeSeconds: nextDuration,
+              segmentDurationSeconds: 15,
+              language: nextLangObj.lang,
+              nativeName: nextLangObj.native,
+              confidence: Math.floor(92 + Math.random() * 7),
+              sampleSnippet: nextLangObj.snippet,
+              detectionModel: 'WavLM-LID Neural Chunk v2',
+            };
+
+            nextLanguages.push(newSeg);
+            nextTimeline.push({
+              timestamp: formattedTime,
+              timeSeconds: nextDuration,
+              title: `Automatic LID Detected Language Switch: ${currentLastLang} → ${nextLangObj.lang}`,
+              description: `Chunk-level acoustic model adapted. Baseline risk unaffected.`,
+              severity: 'INFO',
+            });
+
+            AuditService.logEvent(
+              `Automatic Code-Switch: ${currentLastLang} → ${nextLangObj.lang}`,
+              prev.riskBreakdown.finalScore,
+              'AUTO_LID_SWITCH',
+              'System',
+              'Completed',
+              prev.id
+            );
+          }
+        }
+
+        // Specific scenario variations
         if (activeScenarioId === 'VOICE_CLONE_SCAM') {
           if (tick === 3) {
             nextSignals.syntheticProbability = Math.min(96, nextSignals.syntheticProbability + 3);
             nextSignals.speakerConsistency = Math.max(48, nextSignals.speakerConsistency - 2);
-          } else if (tick === 6 && nextLanguages.length === 1) {
-            nextLanguages.push({
-              timestamp: formatDuration(nextDuration),
-              timeSeconds: nextDuration,
-              language: 'English',
-              confidence: 94,
-            });
-            nextTimeline.push({
-              timestamp: formatDuration(nextDuration),
-              timeSeconds: nextDuration,
-              title: 'Language Switched: Hindi → English',
-              description: 'Multilingual neural model active. Baseline risk retained.',
-              severity: 'INFO',
-            });
           } else if (tick === 10) {
             nextSignals.transactionRisk = 92;
             nextTimeline.push({
@@ -134,15 +122,6 @@ export function useLiveCall(weights: RiskWeights) {
               title: '₹75,000 Transfer Requested',
               description: 'Urgent transfer request to new unverified recipient',
               severity: 'CRITICAL',
-            });
-          }
-        } else if (activeScenarioId === 'MULTILINGUAL_CODE_SWITCH') {
-          if (tick === 4 && nextLanguages.length === 3) {
-            nextLanguages.push({
-              timestamp: formatDuration(nextDuration),
-              timeSeconds: nextDuration,
-              language: 'Bhojpuri',
-              confidence: 89,
             });
           }
         }
@@ -178,6 +157,7 @@ export function useLiveCall(weights: RiskWeights) {
         const updatedCall: CallRecord = {
           ...prev,
           durationSeconds: nextDuration,
+          primaryLanguage: nextLanguages[nextLanguages.length - 1]?.language || prev.primaryLanguage,
           signals: nextSignals,
           languagesDetected: nextLanguages,
           incidentTimeline: nextTimeline,
@@ -276,6 +256,5 @@ export function useLiveCall(weights: RiskWeights) {
     updateSignals,
     updateTransaction,
     addSecurityAction,
-    manuallySwitchLanguage,
   };
 }

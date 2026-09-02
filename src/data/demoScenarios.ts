@@ -19,9 +19,9 @@ export const DEMO_SCENARIOS: Record<string, DemoScenario> = {
       primaryLanguage: 'Hindi',
       audioQuality: 'EXCELLENT',
       languagesDetected: [
-        { timestamp: '00:10', timeSeconds: 10, language: 'Hindi', confidence: 97 },
-        { timestamp: '00:45', timeSeconds: 45, language: 'Hindi', confidence: 98 },
-        { timestamp: '01:20', timeSeconds: 80, language: 'English', confidence: 92 },
+        { timestamp: '00:10', timeSeconds: 10, segmentDurationSeconds: 35, language: 'Hindi', nativeName: 'हिंदी', confidence: 97, sampleSnippet: 'अरे भाई, शाम का क्या प्लान है?', detectionModel: 'WavLM-LID Neural Chunk v2' },
+        { timestamp: '00:45', timeSeconds: 45, segmentDurationSeconds: 35, language: 'Hindi', nativeName: 'हिंदी', confidence: 98, sampleSnippet: 'हाँ, घर का खाना ही अच्छा रहेगा।', detectionModel: 'WavLM-LID Neural Chunk v2' },
+        { timestamp: '01:20', timeSeconds: 80, segmentDurationSeconds: 25, language: 'English', nativeName: 'English', confidence: 92, sampleSnippet: 'See you around 8 PM then!', detectionModel: 'Whisper-LID Fast' },
       ],
       signals: {
         syntheticProbability: 12,
@@ -85,8 +85,8 @@ export const DEMO_SCENARIOS: Record<string, DemoScenario> = {
       primaryLanguage: 'English',
       audioQuality: 'DEGRADED',
       languagesDetected: [
-        { timestamp: '00:10', timeSeconds: 10, language: 'English', confidence: 94 },
-        { timestamp: '00:50', timeSeconds: 50, language: 'English', confidence: 96 },
+        { timestamp: '00:10', timeSeconds: 10, segmentDurationSeconds: 40, language: 'English', nativeName: 'English', confidence: 94, sampleSnippet: 'Hello, this is security verification department.', detectionModel: 'Whisper-LID Fast' },
+        { timestamp: '00:50', timeSeconds: 50, segmentDurationSeconds: 62, language: 'English', nativeName: 'English', confidence: 96, sampleSnippet: 'Please confirm your account passcode immediately.', detectionModel: 'Whisper-LID Fast' },
       ],
       signals: {
         syntheticProbability: 78,
@@ -150,9 +150,9 @@ export const DEMO_SCENARIOS: Record<string, DemoScenario> = {
       primaryLanguage: 'Hindi',
       audioQuality: 'GOOD',
       languagesDetected: [
-        { timestamp: '00:10', timeSeconds: 10, language: 'Hindi', confidence: 96 },
-        { timestamp: '00:45', timeSeconds: 45, language: 'English', confidence: 94 },
-        { timestamp: '01:30', timeSeconds: 90, language: 'Hindi', confidence: 95 },
+        { timestamp: '00:10', timeSeconds: 10, segmentDurationSeconds: 35, language: 'Hindi', nativeName: 'हिंदी', confidence: 96, sampleSnippet: 'सुनो भैया, बहुत जरूरी काम है, ₹75,000 भेज दो।', detectionModel: 'WavLM-LID Neural Chunk v2' },
+        { timestamp: '00:45', timeSeconds: 45, segmentDurationSeconds: 45, language: 'English', nativeName: 'English', confidence: 94, sampleSnippet: 'I am sending you the new bank account details right now.', detectionModel: 'Whisper-LID Fast' },
+        { timestamp: '01:30', timeSeconds: 90, segmentDurationSeconds: 60, language: 'Hindi', nativeName: 'हिंदी', confidence: 95, sampleSnippet: 'जल्दी करो, सर्वर बंद होने वाला है!', detectionModel: 'WavLM-LID Neural Chunk v2' },
       ],
       signals: {
         syntheticProbability: 92,
@@ -222,11 +222,11 @@ export const DEMO_SCENARIOS: Record<string, DemoScenario> = {
       primaryLanguage: 'Hindi / English / Bhojpuri',
       audioQuality: 'EXCELLENT',
       languagesDetected: [
-        { timestamp: '00:10', timeSeconds: 10, language: 'Hindi', confidence: 96 },
-        { timestamp: '00:25', timeSeconds: 25, language: 'English', confidence: 94 },
-        { timestamp: '00:41', timeSeconds: 41, language: 'Hindi', confidence: 95 },
-        { timestamp: '00:58', timeSeconds: 58, language: 'Bhojpuri', confidence: 89 },
-        { timestamp: '01:15', timeSeconds: 75, language: 'English', confidence: 95 },
+        { timestamp: '00:10', timeSeconds: 10, segmentDurationSeconds: 15, language: 'Hindi', nativeName: 'हिंदी', confidence: 96, sampleSnippet: 'नमस्ते, कैसी हो तुम?', detectionModel: 'WavLM-LID Neural Chunk v2' },
+        { timestamp: '00:25', timeSeconds: 25, segmentDurationSeconds: 16, language: 'English', nativeName: 'English', confidence: 94, sampleSnippet: 'I was just checking on the flight details for tomorrow.', detectionModel: 'Whisper-LID Fast' },
+        { timestamp: '00:41', timeSeconds: 41, segmentDurationSeconds: 17, language: 'Hindi', nativeName: 'हिंदी', confidence: 95, sampleSnippet: 'हाँ, टिकट बुक हो गई है।', detectionModel: 'WavLM-LID Neural Chunk v2' },
+        { timestamp: '00:58', timeSeconds: 58, segmentDurationSeconds: 17, language: 'Bhojpuri', nativeName: 'भोजपुरी', confidence: 89, sampleSnippet: 'तनी हमरा खातिर आम के अचार भी ले आइह।', detectionModel: 'Indic-Acoustic LID' },
+        { timestamp: '01:15', timeSeconds: 75, segmentDurationSeconds: 110, language: 'English', nativeName: 'English', confidence: 95, sampleSnippet: 'Don’t forget to call me when you reach!', detectionModel: 'Whisper-LID Fast' },
       ],
       signals: {
         syntheticProbability: 14,
@@ -290,8 +290,8 @@ export const DEMO_SCENARIOS: Record<string, DemoScenario> = {
       primaryLanguage: 'English',
       audioQuality: 'EXCELLENT',
       languagesDetected: [
-        { timestamp: '00:10', timeSeconds: 10, language: 'English', confidence: 98 },
-        { timestamp: '01:00', timeSeconds: 60, language: 'English', confidence: 97 },
+        { timestamp: '00:10', timeSeconds: 10, segmentDurationSeconds: 50, language: 'English', nativeName: 'English', confidence: 98, sampleSnippet: 'Hi, I need you to read me the OTP sent to your phone.', detectionModel: 'Whisper-LID Fast' },
+        { timestamp: '01:00', timeSeconds: 60, segmentDurationSeconds: 150, language: 'English', nativeName: 'English', confidence: 97, sampleSnippet: 'Hurry up, it expires in 60 seconds!', detectionModel: 'Whisper-LID Fast' },
       ],
       signals: {
         syntheticProbability: 10,
