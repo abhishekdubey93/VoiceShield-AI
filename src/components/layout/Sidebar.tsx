@@ -13,6 +13,7 @@ import {
   UploadCloud,
   X,
 } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
 
 export type PageId =
   | 'dashboard'
@@ -40,18 +41,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isOpenMobile,
   onCloseMobile,
 }) => {
-  const navItems: { id: PageId; label: string; icon: React.ElementType; badge?: string }[] = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'live-call', label: 'Live Call Monitor', icon: PhoneCall, badge: 'LIVE' },
-    { id: 'demo-control', label: 'Demo Control Center', icon: SlidersHorizontal, badge: 'HACK' },
-    { id: 'voice-verification', label: 'Voice Verification', icon: UserCheck },
-    { id: 'risk-analysis', label: 'Risk Engine Analysis', icon: Gauge },
-    { id: 'call-history', label: 'Call Threat History', icon: History },
-    { id: 'security-actions', label: 'Security Actions', icon: ShieldCheck },
-    { id: 'audio-analysis', label: 'Audio File Analysis', icon: UploadCloud },
-    { id: 'analytics', label: 'Analytics & Latency', icon: BarChart3 },
-    { id: 'privacy-security', label: 'Privacy & Security', icon: Lock },
-    { id: 'settings', label: 'Settings & Weights', icon: Settings },
+  const { t } = useLanguage();
+
+  const navItems: { id: PageId; labelKey: string; icon: React.ElementType; badge?: string }[] = [
+    { id: 'dashboard', labelKey: 'dashboard', icon: LayoutDashboard },
+    { id: 'live-call', labelKey: 'liveCallMonitor', icon: PhoneCall, badge: 'LIVE' },
+    { id: 'demo-control', labelKey: 'demoControlCenter', icon: SlidersHorizontal, badge: 'HACK' },
+    { id: 'voice-verification', labelKey: 'voiceVerification', icon: UserCheck },
+    { id: 'risk-analysis', labelKey: 'riskAnalysis', icon: Gauge },
+    { id: 'call-history', labelKey: 'callHistory', icon: History },
+    { id: 'security-actions', labelKey: 'securityActions', icon: ShieldCheck },
+    { id: 'audio-analysis', labelKey: 'audioAnalysis', icon: UploadCloud },
+    { id: 'analytics', labelKey: 'analytics', icon: BarChart3 },
+    { id: 'privacy-security', labelKey: 'privacySecurity', icon: Lock },
+    { id: 'settings', labelKey: 'settings', icon: Settings },
   ];
 
   const handleNavClick = (id: PageId) => {
@@ -88,7 +91,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     isActive ? 'text-blue-400' : 'text-slate-500 group-hover:text-slate-300'
                   }`}
                 />
-                <span>{item.label}</span>
+                <span>{t(item.labelKey)}</span>
               </div>
               {item.badge && (
                 <span
@@ -138,7 +141,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           className={`flex flex-col items-center gap-1 ${activePage === 'dashboard' ? 'text-blue-400' : 'text-slate-400'}`}
         >
           <LayoutDashboard className="w-5 h-5" />
-          <span className="text-[9px]">Dashboard</span>
+          <span className="text-[9px]">{t('dashboard')}</span>
         </button>
 
         <button
@@ -146,7 +149,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           className={`flex flex-col items-center gap-1 relative ${activePage === 'live-call' ? 'text-blue-400' : 'text-slate-400'}`}
         >
           <PhoneCall className="w-5 h-5" />
-          <span className="text-[9px]">Live Call</span>
+          <span className="text-[9px]">{t('liveCallMonitor')}</span>
           <span className="absolute -top-1 right-2 w-2 h-2 rounded-full bg-red-500 animate-ping" />
         </button>
 
@@ -163,7 +166,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           className={`flex flex-col items-center gap-1 ${activePage === 'call-history' ? 'text-blue-400' : 'text-slate-400'}`}
         >
           <History className="w-5 h-5" />
-          <span className="text-[9px]">History</span>
+          <span className="text-[9px]">{t('callHistory')}</span>
         </button>
 
         <button
@@ -171,7 +174,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           className={`flex flex-col items-center gap-1 ${activePage === 'settings' ? 'text-blue-400' : 'text-slate-400'}`}
         >
           <Settings className="w-5 h-5" />
-          <span className="text-[9px]">Settings</span>
+          <span className="text-[9px]">{t('settings')}</span>
         </button>
       </nav>
     </>

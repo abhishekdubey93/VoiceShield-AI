@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CallRecord, SecurityActionRecord, TransactionDetails } from '../types';
+import { CallRecord, LanguageCode, SecurityActionRecord, TransactionDetails } from '../types';
 import { Waveform } from '../components/common/Waveform';
 import { RiskMeter } from '../components/common/RiskMeter';
 import { LanguageTimeline } from '../components/call/LanguageTimeline';
@@ -9,6 +9,7 @@ import { CallbackModal } from '../components/call/CallbackModal';
 import { SupervisorModal } from '../components/call/SupervisorModal';
 import { HoldModal } from '../components/call/HoldModal';
 import { formatCurrency, formatDuration, maskPhoneNumber } from '../utils/formatters';
+import { useLanguage } from '../context/LanguageContext';
 import {
   PhoneCall,
   PhoneOff,
@@ -34,6 +35,7 @@ interface LiveCallPageProps {
   onUpdateTransaction: (updates: Partial<TransactionDetails>) => void;
   onAddAction: (action: SecurityActionRecord) => void;
   onAddToast: (title: string, message: string, type?: 'info' | 'warning' | 'success' | 'danger') => void;
+  onManualLanguageSwitch?: (lang: LanguageCode) => void;
 }
 
 export const LiveCallPage: React.FC<LiveCallPageProps> = ({
@@ -44,7 +46,9 @@ export const LiveCallPage: React.FC<LiveCallPageProps> = ({
   onUpdateTransaction,
   onAddAction,
   onAddToast,
+  onManualLanguageSwitch,
 }) => {
+  const { t } = useLanguage();
   // Modal states
   const [activeModal, setActiveModal] = useState<'CHALLENGE' | 'MFA' | 'CALLBACK' | 'SUPERVISOR' | 'HOLD' | null>(null);
 
@@ -121,14 +125,14 @@ export const LiveCallPage: React.FC<LiveCallPageProps> = ({
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping" />
             <h2 className="text-xl font-extrabold text-slate-100 uppercase tracking-tight">
-              LIVE CALL SECURITY MONITOR
+              {t('liveCallMonitor')}
             </h2>
             <span className="bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px] font-mono px-2 py-0.5 rounded font-bold">
-              DEMO ANALYSIS
+              {t('liveAnalysis')}
             </span>
           </div>
           <p className="text-xs text-slate-400 mt-1">
-            Real-time ticking stream inspection • Simulated 1–2s signal updates
+            Real-time ticking stream inspection • Simulated 1–2s signal updates & code-switching adaptation
           </p>
         </div>
 
@@ -206,7 +210,7 @@ export const LiveCallPage: React.FC<LiveCallPageProps> = ({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-mono">
                 <div>
                   <div className="flex justify-between mb-1">
-                    <span className="text-slate-400">Synthetic Voice Prob:</span>
+                    <span className="text-slate-400">{t('syntheticProb')}:</span>
                     <span className="text-red-400 font-bold">{currentCall.signals.syntheticProbability}%</span>
                   </div>
                   <input
@@ -221,7 +225,7 @@ export const LiveCallPage: React.FC<LiveCallPageProps> = ({
 
                 <div>
                   <div className="flex justify-between mb-1">
-                    <span className="text-slate-400">Speaker Consistency:</span>
+                    <span className="text-slate-400">{t('speakerMatch')}:</span>
                     <span className="text-amber-400 font-bold">{currentCall.signals.speakerConsistency}%</span>
                   </div>
                   <input
@@ -238,7 +242,10 @@ export const LiveCallPage: React.FC<LiveCallPageProps> = ({
           </div>
 
           {/* Multilingual Timeline */}
-          <LanguageTimeline segments={currentCall.languagesDetected} />
+          <LanguageTimeline
+            segments={currentCall.languagesDetected}
+            onManualLanguageSwitch={onManualLanguageSwitch}
+          />
         </div>
 
         {/* Col 3: Live Risk Meter & Protection Action Control Center */}
@@ -298,28 +305,28 @@ export const LiveCallPage: React.FC<LiveCallPageProps> = ({
                   onClick={() => setActiveModal('MFA')}
                   className="py-2.5 px-3 rounded-lg bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 border border-amber-500/40 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
                 >
-                  <KeyRound className="w-4 h-4" /> Require MFA
+                  <KeyRound className="w-4 h-4" /> {t('requireMfa')}
                 </button>
 
                 <button
                   onClick={() => setActiveModal('CALLBACK')}
                   className="py-2.5 px-3 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/40 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
                 >
-                  <PhoneCall className="w-4 h-4" /> Trusted Callback
+                  <PhoneCall className="w-4 h-4" /> {t('trustedCallback')}
                 </button>
 
                 <button
                   onClick={() => setActiveModal('CHALLENGE')}
                   className="py-2.5 px-3 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
                 >
-                  <ShieldCheck className="w-4 h-4" /> Liveness Challenge
+                  <ShieldCheck className="w-4 h-4" /> {t('livenessChallenge')}
                 </button>
 
                 <button
                   onClick={() => setActiveModal('SUPERVISOR')}
                   className="py-2.5 px-3 rounded-lg bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 border border-purple-500/40 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
                 >
-                  <UserCheck className="w-4 h-4" /> Supervisor Req
+                  <UserCheck className="w-4 h-4" /> {t('supervisorApproval')}
                 </button>
               </div>
 
@@ -327,7 +334,7 @@ export const LiveCallPage: React.FC<LiveCallPageProps> = ({
                 onClick={handleHoldToggle}
                 className="w-full py-2.5 rounded-lg bg-red-600 hover:bg-red-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg transition-colors"
               >
-                <Lock className="w-4 h-4" /> HOLD TRANSACTION
+                <Lock className="w-4 h-4" /> {t('holdTransaction')}
               </button>
             </div>
           </div>

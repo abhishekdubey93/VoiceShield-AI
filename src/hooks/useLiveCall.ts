@@ -4,6 +4,7 @@ import { DEMO_SCENARIOS } from '../data/demoScenarios';
 import { RiskEngine } from '../services/riskEngine';
 import { AuditService } from '../services/auditService';
 import { StorageService } from '../services/storageService';
+import { formatDuration } from '../utils/formatters';
 
 export function useLiveCall(weights: RiskWeights) {
   const [activeScenarioId, setActiveScenarioId] = useState<ScenarioId>('VOICE_CLONE_SCAM');
@@ -41,6 +42,55 @@ export function useLiveCall(weights: RiskWeights) {
     });
   }, [weights]);
 
+  // Interactive Live Language Switcher
+  const manuallySwitchLanguage = useCallback((newLang: LanguageCode) => {
+    setCurrentCall((prev) => {
+      const formattedTime = formatDuration(prev.durationSeconds);
+      const prevLang = prev.languagesDetected[prev.languagesDetected.length - 1]?.language || 'Hindi';
+
+      if (prevLang === newLang) return prev;
+
+      const newSegment = {
+        timestamp: formattedTime,
+        timeSeconds: prev.durationSeconds,
+        language: newLang,
+        confidence: Math.floor(92 + Math.random() * 7),
+      };
+
+      const updatedLanguages = [...prev.languagesDetected, newSegment];
+      const updatedTimeline = [
+        ...prev.incidentTimeline,
+        {
+          timestamp: formattedTime,
+          timeSeconds: prev.durationSeconds,
+          title: `Language Switched: ${prevLang} → ${newLang}`,
+          description: `Chunk-level acoustic model adapted seamlessly. Baseline risk score unaffected.`,
+          severity: 'INFO' as const,
+        },
+      ];
+
+      // Note: Risk score is explicitly NOT penalized by language switching
+      const updatedCall: CallRecord = {
+        ...prev,
+        primaryLanguage: newLang,
+        languagesDetected: updatedLanguages,
+        incidentTimeline: updatedTimeline,
+      };
+
+      StorageService.addCallRecord(updatedCall);
+      AuditService.logEvent(
+        `Multilingual Code-Switch: ${prevLang} → ${newLang}`,
+        prev.riskBreakdown.finalScore,
+        'LANGUAGE_SWITCH',
+        'System',
+        'Completed',
+        prev.id
+      );
+
+      return updatedCall;
+    });
+  }, []);
+
   // Ticking real-time engine (every 1.5 seconds)
   useEffect(() => {
     if (!isSimulating || currentCall.status === 'COMPLETED' || currentCall.status === 'BLOCKED') {
@@ -62,16 +112,16 @@ export function useLiveCall(weights: RiskWeights) {
           if (tick === 3) {
             nextSignals.syntheticProbability = Math.min(96, nextSignals.syntheticProbability + 3);
             nextSignals.speakerConsistency = Math.max(48, nextSignals.speakerConsistency - 2);
-          } else if (tick === 6) {
+          } else if (tick === 6 && nextLanguages.length === 1) {
             nextLanguages.push({
-              timestamp: '00:25',
-              timeSeconds: 25,
+              timestamp: formatDuration(nextDuration),
+              timeSeconds: nextDuration,
               language: 'English',
               confidence: 94,
             });
             nextTimeline.push({
-              timestamp: '00:25',
-              timeSeconds: 25,
+              timestamp: formatDuration(nextDuration),
+              timeSeconds: nextDuration,
               title: 'Language Switched: Hindi → English',
               description: 'Multilingual neural model active. Baseline risk retained.',
               severity: 'INFO',
@@ -79,8 +129,8 @@ export function useLiveCall(weights: RiskWeights) {
           } else if (tick === 10) {
             nextSignals.transactionRisk = 92;
             nextTimeline.push({
-              timestamp: '00:40',
-              timeSeconds: 40,
+              timestamp: formatDuration(nextDuration),
+              timeSeconds: nextDuration,
               title: '₹75,000 Transfer Requested',
               description: 'Urgent transfer request to new unverified recipient',
               severity: 'CRITICAL',
@@ -89,8 +139,8 @@ export function useLiveCall(weights: RiskWeights) {
         } else if (activeScenarioId === 'MULTILINGUAL_CODE_SWITCH') {
           if (tick === 4 && nextLanguages.length === 3) {
             nextLanguages.push({
-              timestamp: '00:58',
-              timeSeconds: 58,
+              timestamp: formatDuration(nextDuration),
+              timeSeconds: nextDuration,
               language: 'Bhojpuri',
               confidence: 89,
             });
@@ -226,5 +276,6 @@ export function useLiveCall(weights: RiskWeights) {
     updateSignals,
     updateTransaction,
     addSecurityAction,
+    manuallySwitchLanguage,
   };
 }

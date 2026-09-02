@@ -6,6 +6,7 @@ import { useRiskConfig } from './hooks/useRiskConfig';
 import { useLiveCall } from './hooks/useLiveCall';
 import { StorageService } from './services/storageService';
 import { CallRecord } from './types';
+import { LanguageProvider } from './context/LanguageContext';
 
 // Pages
 import { Dashboard } from './pages/Dashboard';
@@ -21,7 +22,7 @@ import { AudioAnalysisPage } from './pages/AudioAnalysisPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { DemoControlCenterPage } from './pages/DemoControlCenterPage';
 
-export function App() {
+export function AppContent() {
   const [activePage, setActivePage] = useState<PageId>('dashboard');
   const [selectedHistoryCall, setSelectedHistoryCall] = useState<CallRecord | null>(null);
 
@@ -38,6 +39,7 @@ export function App() {
     updateSignals,
     updateTransaction,
     addSecurityAction,
+    manuallySwitchLanguage,
   } = useLiveCall(weights);
 
   // Call History State
@@ -111,6 +113,10 @@ export function App() {
             setCallHistory(StorageService.getCallHistory());
           }}
           onAddToast={addToast}
+          onManualLanguageSwitch={(lang) => {
+            manuallySwitchLanguage(lang);
+            addToast('Code-Switch Detected', `Caller switched spoken language to ${lang}. Risk baseline preserved.`, 'info');
+          }}
         />
       )}
 
@@ -169,6 +175,14 @@ export function App() {
         />
       )}
     </Layout>
+  );
+}
+
+export function App() {
+  return (
+    <LanguageProvider>
+      <AppContent />
+    </LanguageProvider>
   );
 }
 
