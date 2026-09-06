@@ -36,7 +36,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-base font-extrabold text-slate-100 tracking-tight">{t('appTitle')}</h1>
-              <span className="hidden sm:inline-block text-[10px] font-mono font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded">
+              <span className="hidden sm:inline-block text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded uppercase">
                 {t('demoMvp')}
               </span>
             </div>

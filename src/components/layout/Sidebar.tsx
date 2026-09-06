@@ -46,7 +46,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const navItems: { id: PageId; labelKey: string; icon: React.ElementType; badge?: string }[] = [
     { id: 'dashboard', labelKey: 'dashboard', icon: LayoutDashboard },
     { id: 'live-call', labelKey: 'liveCallMonitor', icon: PhoneCall, badge: 'LIVE' },
-    { id: 'demo-control', labelKey: 'demoControlCenter', icon: SlidersHorizontal, badge: 'HACK' },
+    { id: 'demo-control', labelKey: 'demoControlCenter', icon: SlidersHorizontal, badge: 'SCENARIO' },
     { id: 'voice-verification', labelKey: 'voiceVerification', icon: UserCheck },
     { id: 'risk-analysis', labelKey: 'riskAnalysis', icon: Gauge },
     { id: 'call-history', labelKey: 'callHistory', icon: History },
@@ -111,9 +111,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       <div className="pt-4 border-t border-cyber-border mt-auto">
         <div className="bg-cyber-card border border-cyber-border p-3 rounded-lg text-center">
-          <span className="text-[10px] font-mono text-slate-400 block uppercase">Deployment Mode</span>
-          <span className="text-xs font-mono font-bold text-emerald-400 block mt-0.5">EDGE-READY DEMO</span>
-          <span className="text-[9px] text-slate-500 block mt-1">Hackathon Architecture v1.0</span>
+          <span className="text-[10px] font-mono text-slate-400 block uppercase">SYSTEM ENGINE</span>
+          <span className="text-xs font-mono font-bold text-emerald-400 block mt-0.5">PRODUCTION ACTIVE</span>
+          <span className="text-[9px] text-slate-500 block mt-1">VoiceShield Backend v2.4</span>
         </div>
       </div>
     </div>

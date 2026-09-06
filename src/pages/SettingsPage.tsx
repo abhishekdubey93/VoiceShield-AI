@@ -57,17 +57,17 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         totalWeight={totalWeight}
       />
 
-      {/* Demo Reset Card */}
+      {/* System Cache & State Reset Card */}
       <div className="bg-cyber-card border border-cyber-border rounded-xl p-5 shadow-lg space-y-4">
         <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider font-mono">
-          DEMO STATE MANAGEMENT
+          SYSTEM STATE MANAGEMENT
         </h3>
 
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-cyber-dark p-4 rounded-xl border border-cyber-border">
           <div>
-            <h4 className="text-sm font-bold text-slate-100">Reset Demo Persistence</h4>
+            <h4 className="text-sm font-bold text-slate-100">Reset System Cache & Persistence</h4>
             <p className="text-xs text-slate-400 mt-0.5">
-              Clears LocalStorage call history, custom voice profiles, and audit log entries back to default hackathon seed states.
+              Clears local call log cache, verified voice enrollment profiles, and audit log history back to baseline system default state.
             </p>
           </div>
 
@@ -75,7 +75,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
             onClick={handleReset}
             className="px-4 py-2.5 bg-red-600/20 hover:bg-red-600/30 text-red-300 border border-red-500/40 text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5 flex-shrink-0"
           >
-            <RotateCcw className="w-4 h-4" /> Reset Demo Data
+            <RotateCcw className="w-4 h-4" /> Reset System Cache
           </button>
         </div>
       </div>

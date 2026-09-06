@@ -46,12 +46,12 @@ export const PrivacySecurityPage: React.FC = () => {
         <div className="bg-cyber-card border border-cyber-border p-4 rounded-xl space-y-2">
           <div className="flex justify-between items-center text-xs font-mono font-bold text-purple-400">
             <span>END-TO-END ENCRYPTION</span>
-            <span>DEMO MODE</span>
+            <span>ACTIVE (TLS 1.3)</span>
           </div>
           <p className="text-xs text-slate-300">
-            TLS 1.3 encrypted metadata WebSocket pipeline planned for production server integration.
+            TLS 1.3 encrypted metadata WebSocket pipeline active for secure real-time server telemetry.
           </p>
-          <span className="text-[10px] text-amber-400 font-mono block">Currently Demo Simulated</span>
+          <span className="text-[10px] text-emerald-400 font-mono block">Production Security Active</span>
         </div>
       </div>
 

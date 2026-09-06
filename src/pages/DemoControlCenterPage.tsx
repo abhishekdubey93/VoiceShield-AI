@@ -22,14 +22,14 @@ export const DemoControlCenterPage: React.FC<DemoControlCenterPageProps> = ({
           <div className="flex items-center gap-2">
             <Sliders className="w-5 h-5 text-blue-400" />
             <h2 className="text-xl font-extrabold text-slate-100 uppercase tracking-tight">
-              DEMO CONTROL & MODE SELECTION
+              SCENARIO CONTROL & MODE SELECTION
             </h2>
-            <span className="bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-mono px-2 py-0.5 rounded font-bold">
-              SIH 2026 PRESENTATION MODE
+            <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-mono px-2 py-0.5 rounded font-bold uppercase">
+              PRODUCTION SECURITY SUITE
             </span>
           </div>
           <p className="text-xs text-slate-400 mt-1">
-            Explicitly toggle between Real PyTorch ML Inference Mode and Controlled Demo Test Scenarios.
+            Toggle between Live PyTorch Neural Stream Mode and Configured Threat Simulation Scenarios.
           </p>
         </div>
       </div>
@@ -65,17 +65,17 @@ export const DemoControlCenterPage: React.FC<DemoControlCenterPageProps> = ({
           </div>
         </div>
 
-        {/* Demo Test Scenarios Card */}
+        {/* Threat Test Scenarios Card */}
         <div className="bg-cyber-card border border-amber-500/40 rounded-xl p-6 shadow-xl space-y-4">
           <div className="flex items-center justify-between">
             <span className="text-xs font-mono font-bold text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded border border-amber-500/20 flex items-center gap-1.5">
-              <Play className="w-4 h-4" /> PRESENTATION TEST SCENARIOS
+              <Play className="w-4 h-4" /> SECURITY THREAT SCENARIOS
             </span>
-            <span className="text-[10px] text-slate-400 font-mono">Repeatable Hackathon Scenarios</span>
+            <span className="text-[10px] text-slate-400 font-mono">Simulated Attack Models</span>
           </div>
 
           <p className="text-xs text-slate-300">
-            Pre-configured attack and genuine scenarios designed for repeatable, live judge presentations during hackathon evaluation.
+            Pre-configured attack vector and genuine voice baseline profiles designed for continuous security verification and threat simulation.
           </p>
         </div>
       </div>
@@ -83,7 +83,7 @@ export const DemoControlCenterPage: React.FC<DemoControlCenterPageProps> = ({
       {/* Scenario List */}
       <div className="space-y-4">
         <h3 className="text-xs font-bold text-slate-200 uppercase tracking-wider font-mono">
-          PRE-CONFIGURED PRESENTATION SCENARIOS
+          PRE-CONFIGURED SECURITY THREAT SCENARIOS
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

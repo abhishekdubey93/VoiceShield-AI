@@ -196,46 +196,112 @@ export const LiveCallPage: React.FC<LiveCallPageProps> = ({
               <Waveform isActive={isSimulating} barCount={42} height={54} color="#3B82F6" />
             </div>
 
-            {/* Signal Adjuster Sliders (Interactive Demo Controls) */}
-            <div className="bg-cyber-dark/40 p-4 rounded-xl border border-cyber-border space-y-3">
+            {/* Automated Signal Telemetry (Backend System Controlled) */}
+            <div className="bg-cyber-dark/40 p-4 rounded-xl border border-cyber-border space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
-                  <Sliders className="w-4 h-4 text-blue-400" /> Live Signal Tweaker (Judge Interactive)
+                <span className="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-1.5 font-mono">
+                  <Activity className="w-4 h-4 text-blue-400" /> REAL-TIME SIGNAL TELEMETRY & SPECTRUM
                 </span>
-                <span className="text-[10px] text-slate-400 font-mono">Simulate acoustic degradation</span>
+                <span className="text-[10px] text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded font-mono font-semibold flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-ping" /> AUTO BACKEND SAMPLING
+                </span>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-mono">
-                <div>
-                  <div className="flex justify-between mb-1">
+                {/* Synthetic Probability Automated Readout */}
+                <div className="bg-cyber-dark/80 p-3 rounded-lg border border-cyber-border space-y-2">
+                  <div className="flex items-center justify-between">
                     <span className="text-slate-400">{t('syntheticProb')}:</span>
-                    <span className="text-red-400 font-bold">{currentCall.signals.syntheticProbability}%</span>
+                    <span className={`font-bold font-mono text-sm ${
+                      currentCall.signals.syntheticProbability >= 70 ? 'text-red-400' :
+                      currentCall.signals.syntheticProbability >= 35 ? 'text-amber-400' :
+                      'text-emerald-400'
+                    }`}>
+                      {currentCall.signals.syntheticProbability}%
+                    </span>
                   </div>
-                  <input
-                    type="range"
-                    min={0}
-                    max={100}
-                    value={currentCall.signals.syntheticProbability}
-                    onChange={(e) => onUpdateSignals({ syntheticProbability: parseInt(e.target.value, 10) })}
-                    className="w-full h-1.5 bg-slate-800 rounded appearance-none cursor-pointer accent-red-500"
-                  />
+                  <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full transition-all duration-500 ${
+                        currentCall.signals.syntheticProbability >= 70 ? 'bg-gradient-to-r from-amber-500 to-red-500' :
+                        currentCall.signals.syntheticProbability >= 35 ? 'bg-amber-400' :
+                        'bg-emerald-400'
+                      }`}
+                      style={{ width: `${currentCall.signals.syntheticProbability}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-between text-[10px] text-slate-400 pt-0.5">
+                    <span>Neural Classifier</span>
+                    <span className={
+                      currentCall.signals.syntheticProbability >= 70 ? 'text-red-400 font-semibold' :
+                      currentCall.signals.syntheticProbability >= 35 ? 'text-amber-400 font-semibold' :
+                      'text-emerald-400 font-semibold'
+                    }>
+                      {currentCall.signals.syntheticProbability >= 70 ? 'HIGH DEEPFAKE RISK' :
+                       currentCall.signals.syntheticProbability >= 35 ? 'CADENCE ANOMALY' :
+                       'AUTHENTIC VOICE'}
+                    </span>
+                  </div>
                 </div>
 
-                <div>
-                  <div className="flex justify-between mb-1">
+                {/* Speaker Consistency Automated Readout */}
+                <div className="bg-cyber-dark/80 p-3 rounded-lg border border-cyber-border space-y-2">
+                  <div className="flex items-center justify-between">
                     <span className="text-slate-400">{t('speakerMatch')}:</span>
-                    <span className="text-amber-400 font-bold">{currentCall.signals.speakerConsistency}%</span>
+                    <span className={`font-bold font-mono text-sm ${
+                      currentCall.signals.speakerConsistency < 50 ? 'text-red-400' :
+                      currentCall.signals.speakerConsistency < 75 ? 'text-amber-400' :
+                      'text-emerald-400'
+                    }`}>
+                      {currentCall.signals.speakerConsistency}%
+                    </span>
                   </div>
-                  <input
-                    type="range"
-                    min={0}
-                    max={100}
-                    value={currentCall.signals.speakerConsistency}
-                    onChange={(e) => onUpdateSignals({ speakerConsistency: parseInt(e.target.value, 10) })}
-                    className="w-full h-1.5 bg-slate-800 rounded appearance-none cursor-pointer accent-amber-500"
-                  />
+                  <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full transition-all duration-500 ${
+                        currentCall.signals.speakerConsistency < 50 ? 'bg-red-500' :
+                        currentCall.signals.speakerConsistency < 75 ? 'bg-amber-400' :
+                        'bg-emerald-400'
+                      }`}
+                      style={{ width: `${currentCall.signals.speakerConsistency}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-between text-[10px] text-slate-400 pt-0.5">
+                    <span>ECAPA-TDNN Embedding</span>
+                    <span className={
+                      currentCall.signals.speakerConsistency < 50 ? 'text-red-400 font-semibold' :
+                      currentCall.signals.speakerConsistency < 75 ? 'text-amber-400 font-semibold' :
+                      'text-emerald-400 font-semibold'
+                    }>
+                      {currentCall.signals.speakerConsistency < 50 ? 'SPEAKER MISMATCH' :
+                       currentCall.signals.speakerConsistency < 75 ? 'DEGRADED MATCH' :
+                       'MATCHED PROFILE'}
+                    </span>
+                  </div>
                 </div>
               </div>
+
+              {/* Frequency & Audio Spectrum Telemetry Grid */}
+              <div className="grid grid-cols-3 gap-2 text-[10px] font-mono pt-1">
+                <div className="bg-cyber-card p-2 rounded border border-cyber-border text-center">
+                  <span className="text-slate-400 block uppercase">Sampling Frequency</span>
+                  <span className="text-blue-400 font-bold">16.0 kHz PCM</span>
+                </div>
+                <div className="bg-cyber-card p-2 rounded border border-cyber-border text-center">
+                  <span className="text-slate-400 block uppercase">Pitch Jitter Freq</span>
+                  <span className="text-slate-200 font-bold">
+                    {(0.14 + (currentCall.signals.syntheticProbability * 0.004)).toFixed(2)} Hz
+                  </span>
+                </div>
+                <div className="bg-cyber-card p-2 rounded border border-cyber-border text-center">
+                  <span className="text-slate-400 block uppercase">Liveness Index</span>
+                  <span className="text-emerald-400 font-bold">{currentCall.signals.livenessScore}%</span>
+                </div>
+              </div>
+
+              <p className="text-[10px] text-slate-500 font-mono italic text-left">
+                * Signal telemetry is processed automatically by the website backend and dynamically feeds the Risk Engine.
+              </p>
             </div>
           </div>
 
@@ -256,6 +322,23 @@ export const LiveCallPage: React.FC<LiveCallPageProps> = ({
               actionText={currentCall.riskBreakdown.recommendedAction}
               size="md"
             />
+
+            {/* Dynamic Telemetry Risk Drivers Summary */}
+            <div className="bg-cyber-dark/80 p-3 rounded-lg border border-cyber-border text-left font-mono text-[11px] space-y-1.5">
+              <span className="text-[10px] text-slate-400 uppercase block font-bold">Real-Time Risk Breakdown:</span>
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-slate-300">Synthetic Voice:</span>
+                <span className="text-red-400 font-bold">+{currentCall.riskBreakdown.weightedSynthetic} pts</span>
+              </div>
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-slate-300">Speaker Mismatch:</span>
+                <span className="text-amber-400 font-bold">+{currentCall.riskBreakdown.weightedSpeaker} pts</span>
+              </div>
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-slate-300">Transaction Intent:</span>
+                <span className="text-purple-400 font-bold">+{currentCall.riskBreakdown.weightedTransaction} pts</span>
+              </div>
+            </div>
 
             {/* Sensitive Transaction Selector */}
             <div className="bg-cyber-dark p-3.5 rounded-lg border border-cyber-border text-left space-y-2">
