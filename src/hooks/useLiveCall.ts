@@ -1,9 +1,20 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { CallRecord, LanguageCode, RiskWeights, ScenarioId, SecurityActionRecord, LanguageSegment } from '../types';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { DEMO_SCENARIOS } from '../data/demoScenarios';
-import { RiskEngine } from '../services/riskEngine';
 import { AuditService } from '../services/auditService';
+import { CallSessionProvider } from '../services/callSessionProvider';
+import { RiskEngine } from '../services/riskEngine';
 import { StorageService } from '../services/storageService';
+import {
+  CallRecord,
+  CallSessionState,
+  IntentCategory,
+  LanguageCode,
+  LanguageSegment,
+  RiskWeights,
+  ScenarioId,
+  SecurityActionRecord,
+  StructuredRiskResult,
+} from '../types';
 import { formatDuration } from '../utils/formatters';
 
 const AUTOMATIC_LANGUAGE_SEQUENCE: { lang: LanguageCode; native: string; snippet: string }[] = [
@@ -20,40 +31,51 @@ export function useLiveCall(weights: RiskWeights) {
   const [currentCall, setCurrentCall] = useState<CallRecord>(
     () => DEMO_SCENARIOS.MULTILINGUAL_CODE_SWITCH.defaultCall
   );
+  const [sessionState, setSessionState] = useState<CallSessionState>('CALL_ACTIVE');
   const [isSimulating, setIsSimulating] = useState<boolean>(true);
   const tickCountRef = useRef(0);
   const langIndexRef = useRef(0);
 
   // Switch Scenario
-  const selectScenario = useCallback((id: ScenarioId) => {
-    setActiveScenarioId(id);
-    const scenario = DEMO_SCENARIOS[id];
-    if (scenario) {
-      const callCopy = JSON.parse(JSON.stringify(scenario.defaultCall)) as CallRecord;
-      callCopy.riskBreakdown = RiskEngine.calculateRisk(callCopy.signals, weights);
-      setCurrentCall(callCopy);
-      tickCountRef.current = 0;
-      langIndexRef.current = 0;
-      AuditService.logEvent(
-        `Switched demo scenario to: ${scenario.name}`,
-        callCopy.riskBreakdown.finalScore,
-        'SCENARIO_SWITCH',
-        'User',
-        'Completed',
-        callCopy.id
-      );
-    }
-  }, [weights]);
+  const selectScenario = useCallback(
+    (id: ScenarioId) => {
+      setActiveScenarioId(id);
+      const scenario = DEMO_SCENARIOS[id];
+      if (scenario) {
+        const callCopy = JSON.parse(JSON.stringify(scenario.defaultCall)) as CallRecord;
+        const callerType = callCopy.context.callerType || (callCopy.context.isKnownContact ? 'SAVED_CONTACT' : 'UNKNOWN_CONTACT');
 
-  // Recalculate risk whenever weights change
-  useEffect(() => {
-    setCurrentCall((prev) => {
-      const updatedBreakdown = RiskEngine.calculateRisk(prev.signals, weights);
-      return { ...prev, riskBreakdown: updatedBreakdown };
-    });
-  }, [weights]);
+        const structured = RiskEngine.calculateStructuredRisk({
+          callerType,
+          signals: callCopy.signals,
+          audioQuality: callCopy.audioQuality || 'EXCELLENT',
+          detectedCategories: callCopy.detectedCategories || [],
+          weights,
+        });
 
-  // Ticking real-time engine (every 1.5 seconds)
+        callCopy.riskBreakdown = structured.breakdown;
+        callCopy.voiceVerificationStatus = structured.voiceVerification.status;
+        callCopy.sessionState = 'CALL_ACTIVE';
+
+        setCurrentCall(callCopy);
+        setSessionState('CALL_ACTIVE');
+        tickCountRef.current = 0;
+        langIndexRef.current = 0;
+
+        AuditService.logEvent(
+          `Switched protection scenario to: ${scenario.name}`,
+          structured.riskScore,
+          'SCENARIO_SWITCH',
+          'User',
+          'Completed',
+          callCopy.id
+        );
+      }
+    },
+    [weights]
+  );
+
+  // Ticking real-time session engine
   useEffect(() => {
     if (!isSimulating || currentCall.status === 'COMPLETED' || currentCall.status === 'BLOCKED') {
       return;
@@ -68,12 +90,17 @@ export function useLiveCall(weights: RiskWeights) {
         let nextSignals = { ...prev.signals };
         let nextLanguages = [...prev.languagesDetected];
         const nextTimeline = [...prev.incidentTimeline];
+        const nextCategories: IntentCategory[] = [...(prev.detectedCategories || [])];
 
-        // Automatic Language Switch Detection every 6 ticks (~9 seconds)
-        if (tick % 6 === 0 && (activeScenarioId === 'MULTILINGUAL_CODE_SWITCH' || activeScenarioId === 'VOICE_CLONE_SCAM' || activeScenarioId === 'SAFE_FAMILY_CALL')) {
+        // Automatic Language Switch Detection every 6 ticks (~9s)
+        if (
+          tick % 6 === 0 &&
+          (activeScenarioId === 'MULTILINGUAL_CODE_SWITCH' ||
+            activeScenarioId === 'VOICE_CLONE_SCAM' ||
+            activeScenarioId === 'SAFE_FAMILY_CALL')
+        ) {
           langIndexRef.current = (langIndexRef.current + 1) % AUTOMATIC_LANGUAGE_SEQUENCE.length;
           const nextLangObj = AUTOMATIC_LANGUAGE_SEQUENCE[langIndexRef.current];
-
           const currentLastLang = nextLanguages[nextLanguages.length - 1]?.language;
 
           if (currentLastLang !== nextLangObj.lang) {
@@ -93,65 +120,61 @@ export function useLiveCall(weights: RiskWeights) {
             nextTimeline.push({
               timestamp: formattedTime,
               timeSeconds: nextDuration,
-              title: `Automatic LID Detected Language Switch: ${currentLastLang} → ${nextLangObj.lang}`,
+              title: `LID Language Switch: ${currentLastLang} → ${nextLangObj.lang}`,
               description: `Chunk-level acoustic model adapted. Baseline risk unaffected.`,
               severity: 'INFO',
             });
-
-            AuditService.logEvent(
-              `Automatic Code-Switch: ${currentLastLang} → ${nextLangObj.lang}`,
-              prev.riskBreakdown.finalScore,
-              'AUTO_LID_SWITCH',
-              'System',
-              'Completed',
-              prev.id
-            );
           }
         }
 
-        // Specific scenario variations
+        // Scenario Intent Escalation
         if (activeScenarioId === 'VOICE_CLONE_SCAM') {
           if (tick === 3) {
             nextSignals.syntheticProbability = Math.min(96, nextSignals.syntheticProbability + 3);
             nextSignals.speakerConsistency = Math.max(48, nextSignals.speakerConsistency - 2);
-          } else if (tick === 10) {
-            nextSignals.transactionRisk = 92;
+          } else if (tick === 8 && !nextCategories.includes('MONEY_TRANSFER_REQUEST')) {
+            nextCategories.push('MONEY_TRANSFER_REQUEST');
+            nextCategories.push('URGENT_PAYMENT_REQUEST');
             nextTimeline.push({
               timestamp: formatDuration(nextDuration),
               timeSeconds: nextDuration,
-              title: '₹75,000 Transfer Requested',
-              description: 'Urgent transfer request to new unverified recipient',
+              title: 'Urgent ₹75,000 Transfer Request',
+              description: 'Urgent transfer request to new unverified recipient detected',
               severity: 'CRITICAL',
             });
           }
         }
 
-        // Slight micro-fluctuations for dynamic presentation feel
-        const synthNoise = (Math.random() - 0.5) * 2;
-        nextSignals.syntheticProbability = Math.min(99, Math.max(5, Math.round(nextSignals.syntheticProbability + synthNoise)));
+        // Micro-fluctuations for dynamic spectrum readout
+        const synthNoise = (Math.random() - 0.5) * 1.5;
+        nextSignals.syntheticProbability = Math.min(
+          99,
+          Math.max(5, Math.round(nextSignals.syntheticProbability + synthNoise))
+        );
 
-        const newBreakdown = RiskEngine.calculateRisk(nextSignals, weights);
+        const callerType =
+          prev.context.callerType || (prev.context.isKnownContact ? 'SAVED_CONTACT' : 'UNKNOWN_CONTACT');
 
-        // Auto trigger hold if critical risk reached in clone scenario
+        const structured = RiskEngine.calculateStructuredRisk({
+          callerType,
+          signals: nextSignals,
+          audioQuality: prev.audioQuality || 'EXCELLENT',
+          detectedCategories: nextCategories,
+          weights,
+        });
+
+        // Trigger automatic hold if critical risk crossed
         const updatedActions = [...prev.actionsTaken];
-        if (newBreakdown.finalScore >= 80 && !updatedActions.some((a) => a.type === 'TRANSACTION_HOLD')) {
+        if (structured.riskScore >= 80 && !updatedActions.some((a) => a.type === 'TRANSACTION_HOLD')) {
           const autoHoldAction: SecurityActionRecord = {
             id: `act_${Date.now()}`,
             timestamp: new Date().toLocaleTimeString(),
             type: 'TRANSACTION_HOLD',
             status: 'BLOCKED',
-            details: 'AUTOMATIC HOLD: Risk score crossed 80 (CRITICAL threshold). Sensitive transaction suspended.',
+            details: 'AUTOMATIC HOLD: Critical threat threshold crossed. Sensitive transaction suspended.',
             actor: 'System',
           };
           updatedActions.unshift(autoHoldAction);
-          AuditService.logEvent(
-            'AUTOMATIC TRANSACTION HOLD TRIGGERED',
-            newBreakdown.finalScore,
-            'TRANSACTION_HOLD',
-            'System',
-            'Flagged',
-            prev.id
-          );
         }
 
         const updatedCall: CallRecord = {
@@ -161,8 +184,11 @@ export function useLiveCall(weights: RiskWeights) {
           signals: nextSignals,
           languagesDetected: nextLanguages,
           incidentTimeline: nextTimeline,
-          riskBreakdown: newBreakdown,
+          detectedCategories: nextCategories,
+          riskBreakdown: structured.breakdown,
+          voiceVerificationStatus: structured.voiceVerification.status,
           actionsTaken: updatedActions,
+          sessionState: 'CONTINUOUS_ANALYSIS',
         };
 
         StorageService.addCallRecord(updatedCall);
@@ -173,48 +199,47 @@ export function useLiveCall(weights: RiskWeights) {
     return () => clearInterval(interval);
   }, [isSimulating, activeScenarioId, currentCall.status, weights]);
 
-  // Manual Signal Tweaks
-  const updateSignals = useCallback((updates: Partial<CallRecord['signals']>) => {
-    setCurrentCall((prev) => {
-      const nextSignals = { ...prev.signals, ...updates };
-      const nextBreakdown = RiskEngine.calculateRisk(nextSignals, weights);
-      return {
-        ...prev,
-        signals: nextSignals,
-        riskBreakdown: nextBreakdown,
-      };
-    });
-  }, [weights]);
-
   // Manual Transaction Tweaks
-  const updateTransaction = useCallback((updates: Partial<CallRecord['transaction']>) => {
-    setCurrentCall((prev) => {
-      const nextTx = { ...prev.transaction, ...updates };
-      let txRisk = 10;
-      if (nextTx.action === 'Transfer Money') {
-        const amt = nextTx.amount || 0;
-        txRisk = amt > 100000 ? 95 : amt > 50000 ? 85 : 65;
-      } else if (nextTx.action === 'Share OTP') {
-        txRisk = 90;
-      } else if (nextTx.action === 'Reset Account' || nextTx.action === 'Change Password') {
-        txRisk = 80;
-      } else if (nextTx.action === 'Access Confidential Info') {
-        txRisk = 75;
-      }
+  const updateTransaction = useCallback(
+    (updates: Partial<CallRecord['transaction']>) => {
+      setCurrentCall((prev) => {
+        const nextTx = { ...prev.transaction, ...updates };
+        const nextCategories: IntentCategory[] = [...(prev.detectedCategories || [])];
 
-      const nextSignals = { ...prev.signals, transactionRisk: txRisk };
-      const nextBreakdown = RiskEngine.calculateRisk(nextSignals, weights);
+        if (nextTx.action === 'Transfer Money') {
+          if (!nextCategories.includes('MONEY_TRANSFER_REQUEST')) nextCategories.push('MONEY_TRANSFER_REQUEST');
+        } else if (nextTx.action === 'Share OTP') {
+          if (!nextCategories.includes('OTP_REQUEST')) nextCategories.push('OTP_REQUEST');
+        } else if (nextTx.action === 'Reset Account' || nextTx.action === 'Change Password') {
+          if (!nextCategories.includes('PASSWORD_REQUEST')) nextCategories.push('PASSWORD_REQUEST');
+        } else if (nextTx.action === 'Access Confidential Info') {
+          if (!nextCategories.includes('PERSONAL_INFORMATION_REQUEST'))
+            nextCategories.push('PERSONAL_INFORMATION_REQUEST');
+        }
 
-      return {
-        ...prev,
-        transaction: nextTx,
-        signals: nextSignals,
-        riskBreakdown: nextBreakdown,
-      };
-    });
-  }, [weights]);
+        const callerType =
+          prev.context.callerType || (prev.context.isKnownContact ? 'SAVED_CONTACT' : 'UNKNOWN_CONTACT');
 
-  // Action Handlers
+        const structured = RiskEngine.calculateStructuredRisk({
+          callerType,
+          signals: prev.signals,
+          audioQuality: prev.audioQuality || 'EXCELLENT',
+          detectedCategories: nextCategories,
+          weights,
+        });
+
+        return {
+          ...prev,
+          transaction: nextTx,
+          detectedCategories: nextCategories,
+          riskBreakdown: structured.breakdown,
+          voiceVerificationStatus: structured.voiceVerification.status,
+        };
+      });
+    },
+    [weights]
+  );
+
   const addSecurityAction = useCallback((action: SecurityActionRecord) => {
     setCurrentCall((prev) => {
       const updatedActions = [action, ...prev.actionsTaken];
@@ -231,15 +256,20 @@ export function useLiveCall(weights: RiskWeights) {
         actionsTaken: updatedActions,
       };
       StorageService.addCallRecord(updatedCall);
-      AuditService.logEvent(
-        `Action ${action.type}: ${action.details}`,
-        prev.riskBreakdown.finalScore,
-        action.type,
-        action.actor,
-        action.status === 'BLOCKED' || action.status === 'FAILED' ? 'Flagged' : 'Completed',
-        prev.id
-      );
       return updatedCall;
+    });
+  }, []);
+
+  const endSession = useCallback(() => {
+    setCurrentCall((prev) => {
+      const endedCall: CallRecord = {
+        ...prev,
+        status: prev.riskBreakdown.finalScore >= 80 ? 'FLAGGED' : 'COMPLETED',
+        sessionState: 'FINAL_REPORT',
+      };
+      StorageService.addCallRecord(endedCall);
+      setSessionState('FINAL_REPORT');
+      return endedCall;
     });
   }, []);
 
@@ -251,10 +281,11 @@ export function useLiveCall(weights: RiskWeights) {
     activeScenarioId,
     selectScenario,
     currentCall,
+    sessionState,
     isSimulating,
     toggleSimulation,
-    updateSignals,
     updateTransaction,
     addSecurityAction,
+    endSession,
   };
 }

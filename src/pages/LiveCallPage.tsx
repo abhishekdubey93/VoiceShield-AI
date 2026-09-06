@@ -160,8 +160,19 @@ export const LiveCallPage: React.FC<LiveCallPageProps> = ({
                   {currentCall.callerName.charAt(0)}
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-slate-100">{currentCall.callerName}</h3>
-                  <div className="flex items-center gap-2 text-xs text-slate-400 font-mono">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-bold text-slate-100">{currentCall.callerName}</h3>
+                    <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border ${
+                      currentCall.context.isKnownContact || currentCall.context.callerType === 'SAVED_CONTACT'
+                        ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                        : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                    }`}>
+                      {currentCall.context.isKnownContact || currentCall.context.callerType === 'SAVED_CONTACT'
+                        ? 'SAVED CONTACT'
+                        : 'UNKNOWN CONTACT'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-slate-400 font-mono mt-0.5">
                     <span>{maskPhoneNumber(currentCall.callerNumber)}</span>
                     <span>•</span>
                     <span className="text-emerald-400">{currentCall.context.callerIdStatus}</span>
@@ -184,6 +195,19 @@ export const LiveCallPage: React.FC<LiveCallPageProps> = ({
                 </div>
               </div>
             </div>
+
+            {/* Inconclusive Voice Banner (if poor audio quality) */}
+            {currentCall.voiceVerificationStatus === 'INCONCLUSIVE' && (
+              <div className="bg-amber-500/10 border border-amber-500/30 p-3 rounded-lg flex items-center justify-between text-xs text-amber-300 font-mono">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0" />
+                  <span>
+                    <strong>VOICE VERIFICATION INCONCLUSIVE:</strong> Audio quality is insufficient for identity matching. Risk score not penalized.
+                  </span>
+                </div>
+                <span className="text-[10px] text-slate-400 block">Quality: {currentCall.audioQuality}</span>
+              </div>
+            )}
 
             {/* Audio Waveform */}
             <div className="bg-cyber-dark/80 p-4 rounded-xl border border-cyber-border space-y-2">
@@ -269,11 +293,13 @@ export const LiveCallPage: React.FC<LiveCallPageProps> = ({
                   <div className="flex justify-between text-[10px] text-slate-400 pt-0.5">
                     <span>ECAPA-TDNN Embedding</span>
                     <span className={
+                      currentCall.voiceVerificationStatus === 'INCONCLUSIVE' ? 'text-amber-400 font-semibold' :
                       currentCall.signals.speakerConsistency < 50 ? 'text-red-400 font-semibold' :
                       currentCall.signals.speakerConsistency < 75 ? 'text-amber-400 font-semibold' :
                       'text-emerald-400 font-semibold'
                     }>
-                      {currentCall.signals.speakerConsistency < 50 ? 'SPEAKER MISMATCH' :
+                      {currentCall.voiceVerificationStatus === 'INCONCLUSIVE' ? 'INCONCLUSIVE' :
+                       currentCall.signals.speakerConsistency < 50 ? 'SPEAKER MISMATCH' :
                        currentCall.signals.speakerConsistency < 75 ? 'DEGRADED MATCH' :
                        'MATCHED PROFILE'}
                     </span>
@@ -323,21 +349,16 @@ export const LiveCallPage: React.FC<LiveCallPageProps> = ({
               size="md"
             />
 
-            {/* Dynamic Telemetry Risk Drivers Summary */}
-            <div className="bg-cyber-dark/80 p-3 rounded-lg border border-cyber-border text-left font-mono text-[11px] space-y-1.5">
-              <span className="text-[10px] text-slate-400 uppercase block font-bold">Real-Time Risk Breakdown:</span>
-              <div className="flex justify-between items-center text-xs">
-                <span className="text-slate-300">Synthetic Voice:</span>
-                <span className="text-red-400 font-bold">+{currentCall.riskBreakdown.weightedSynthetic} pts</span>
-              </div>
-              <div className="flex justify-between items-center text-xs">
-                <span className="text-slate-300">Speaker Mismatch:</span>
-                <span className="text-amber-400 font-bold">+{currentCall.riskBreakdown.weightedSpeaker} pts</span>
-              </div>
-              <div className="flex justify-between items-center text-xs">
-                <span className="text-slate-300">Transaction Intent:</span>
-                <span className="text-purple-400 font-bold">+{currentCall.riskBreakdown.weightedTransaction} pts</span>
-              </div>
+            {/* Explainable Risk Drivers List ("Why Score Changed") */}
+            <div className="bg-cyber-dark/80 p-3 rounded-lg border border-cyber-border text-left font-mono text-[11px] space-y-2">
+              <span className="text-[10px] text-slate-400 uppercase block font-bold">Why score changed:</span>
+              <ul className="space-y-1 text-[11px] text-slate-300 list-disc list-inside">
+                {currentCall.riskBreakdown.primaryDrivers.map((driver, idx) => (
+                  <li key={idx} className={driver.includes('Critical') || driver.includes('High') ? 'text-red-400 font-semibold' : 'text-slate-300'}>
+                    {driver}
+                  </li>
+                ))}
+              </ul>
             </div>
 
             {/* Sensitive Transaction Selector */}

@@ -2,6 +2,35 @@ export type RiskLevel = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 
 export type LanguageCode = 'Hindi' | 'English' | 'Bengali' | 'Marathi' | 'Tamil' | 'Telugu' | 'Kannada' | 'Gujarati' | 'Bhojpuri';
 
+export type CallSessionState = 'IDLE' | 'CALL_STARTING' | 'CALL_ACTIVE' | 'CONTINUOUS_ANALYSIS' | 'CALL_ENDED' | 'FINAL_REPORT';
+
+export type CallerType = 'SAVED_CONTACT' | 'UNKNOWN_CONTACT';
+
+export type VoiceVerificationStatus = 'VERIFIED' | 'POSSIBLE_MISMATCH' | 'INCONCLUSIVE' | 'UNVERIFIED';
+
+export type AudioQualityGrade = 'EXCELLENT' | 'GOOD' | 'DEGRADED' | 'NOISY' | 'UNUSUALLY_POOR';
+
+export type IntentCategory =
+  | 'OTP_REQUEST'
+  | 'UPI_PIN_REQUEST'
+  | 'ATM_PIN_REQUEST'
+  | 'BANK_PASSWORD_REQUEST'
+  | 'BANK_ACCOUNT_REQUEST'
+  | 'CARD_NUMBER_REQUEST'
+  | 'CVV_REQUEST'
+  | 'SECURITY_CODE_REQUEST'
+  | 'PASSWORD_REQUEST'
+  | 'MONEY_TRANSFER_REQUEST'
+  | 'CASH_REQUEST'
+  | 'PAYMENT_REQUEST'
+  | 'REMOTE_ACCESS_REQUEST'
+  | 'FINANCIAL_IMPERSONATION'
+  | 'URGENT_PAYMENT_REQUEST'
+  | 'THREAT'
+  | 'EXTORTION'
+  | 'SUSPICIOUS_IDENTITY_CLAIM'
+  | 'PERSONAL_INFORMATION_REQUEST';
+
 export interface LanguageSegment {
   timestamp: string;
   timeSeconds: number;
@@ -42,6 +71,26 @@ export interface RiskScoreBreakdown {
   primaryDrivers: string[];
 }
 
+export interface StructuredRiskResult {
+  riskScore: number;
+  riskLevel: RiskLevel;
+  confidence: number;
+  callerType: CallerType;
+  voiceVerification: {
+    status: VoiceVerificationStatus;
+    confidence: number;
+    audioQuality: AudioQualityGrade;
+    reason?: string;
+  };
+  detectedIndicators: IntentCategory[];
+  explanation: string;
+  primaryDrivers: string[];
+  recommendation: string;
+  alertRequired: boolean;
+  vibrationRecommended: boolean;
+  breakdown: RiskScoreBreakdown;
+}
+
 export interface TransactionDetails {
   action: 'Normal Conversation' | 'Transfer Money' | 'Change Password' | 'Reset Account' | 'Share OTP' | 'Access Confidential Info';
   amount?: number;
@@ -53,6 +102,7 @@ export interface TransactionDetails {
 export interface CallContextDetails {
   callerIdStatus: 'VERIFIED' | 'UNVERIFIED' | 'SPOOF_RISK';
   isKnownContact: boolean;
+  callerType: CallerType;
   previousInteractions: number;
   callOriginLocation: string;
   deviceTrustScore: number; // 0 - 100
@@ -76,6 +126,7 @@ export interface CallRecord {
   startTime: string;
   durationSeconds: number;
   status: 'LIVE' | 'PROTECTED' | 'BLOCKED' | 'COMPLETED' | 'FLAGGED';
+  sessionState?: CallSessionState;
   primaryLanguage: string;
   languagesDetected: LanguageSegment[];
   signals: VoiceAnalysisSignals;
@@ -84,7 +135,9 @@ export interface CallRecord {
   riskBreakdown: RiskScoreBreakdown;
   actionsTaken: SecurityActionRecord[];
   incidentTimeline: IncidentEvent[];
-  audioQuality: 'EXCELLENT' | 'GOOD' | 'DEGRADED' | 'NOISY';
+  audioQuality: AudioQualityGrade;
+  voiceVerificationStatus: VoiceVerificationStatus;
+  detectedCategories: IntentCategory[];
 }
 
 export interface IncidentEvent {
